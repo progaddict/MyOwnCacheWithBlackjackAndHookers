@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trainings.Cache", "Trainings.Cache\Trainings.Cache.csproj", "{B539B6DF-FB30-4522-BDCA-7E004F3FC691}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trainings.Cache.Tests", "Trainings.Cache.Tests\Trainings.Cache.Tests.csproj", "{92B2F635-719C-4C0C-B920-92A1AEA2FE89}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B539B6DF-FB30-4522-BDCA-7E004F3FC691}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B539B6DF-FB30-4522-BDCA-7E004F3FC691}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B539B6DF-FB30-4522-BDCA-7E004F3FC691}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B539B6DF-FB30-4522-BDCA-7E004F3FC691}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92B2F635-719C-4C0C-B920-92A1AEA2FE89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92B2F635-719C-4C0C-B920-92A1AEA2FE89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92B2F635-719C-4C0C-B920-92A1AEA2FE89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92B2F635-719C-4C0C-B920-92A1AEA2FE89}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
