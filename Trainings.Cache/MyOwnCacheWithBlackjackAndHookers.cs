@@ -18,82 +18,124 @@ namespace Trainings.Cache
 	/// <seealso cref="LinkedList{T}"/>
 	public sealed class MyOwnCacheWithBlackjackAndHookers<TKey, TValue> : IDictionary<TKey, TValue>
 	{
-		private readonly Int32 capacity;
-		private readonly IDictionary<TKey, TValue> data;
-		private readonly LinkedList<TKey> candidatesForDeletion;
-		private readonly IDictionary<TKey, LinkedListNode<TKey>> keyNodeMapping;
+		#region Fields
 
-		/// <summary>
-		/// Create LU-cache with fixed capacity.
-		/// </summary>
-		/// <param name="capacity">Fixed capacity of the cache.</param>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// Capacity is less than or equals to zero.
-		/// </exception>
-		public MyOwnCacheWithBlackjackAndHookers(Int32 capacity)
+		private readonly Int32 _capacity;
+		private readonly IDictionary<TKey, TValue> _data;
+		private readonly LinkedList<TKey> _candidatesForDeletion;
+		private readonly IDictionary<TKey, LinkedListNode<TKey>> _keyNodeMapping;
+
+		#endregion
+
+		#region Constructors
+
+		public MyOwnCacheWithBlackjackAndHookers(Int32 fixedCacheCapacity)
 		{
-			if (capacity <= 0)
+			if (fixedCacheCapacity <= 0)
 			{
-				throw new ArgumentOutOfRangeException("capacity", capacity, "capacity can't be less than or equal to zero!");
+				throw new ArgumentOutOfRangeException("capacity", fixedCacheCapacity, "capacity can't be less than or equal to zero!");
 			}
-			this.capacity = capacity;
-			data = new Dictionary<TKey, TValue>(capacity);
-			candidatesForDeletion = new LinkedList<TKey>();
-			keyNodeMapping = new Dictionary<TKey, LinkedListNode<TKey>>(capacity);
+			_capacity = fixedCacheCapacity;
+			_data = new Dictionary<TKey, TValue>(fixedCacheCapacity);
+			_candidatesForDeletion = new LinkedList<TKey>();
+			_keyNodeMapping = new Dictionary<TKey, LinkedListNode<TKey>>(fixedCacheCapacity);
+		}
+
+		#endregion
+
+		#region Properties
+
+		public bool IsReadOnly
+		{
+			get { return _data.IsReadOnly; }
 		}
 
 		/// <summary>
-		/// Maximal capacity of the cache.
+		/// Maximal and fixed size of the cache.
 		/// Do not confuse with <see cref="Count"/> which is current size.
 		/// </summary>
 		public Int32 Capacity
 		{
-			get { return capacity; }
+			get { return _capacity; }
 		}
 
-		/// <see cref="Dictionary{TKey,TValue}.GetEnumerator()"/>
+		/// <summary>
+		/// Current number of cached key-value pairs in the cache.
+		/// Can't be greater than <see cref="Capacity"/> of the cache.
+		/// </summary>
+		/// <seealso cref="Dictionary{TKey,TValue}.Count"/>
+		public int Count
+		{
+			get { return _data.Count; }
+		}
+
+		/// <summary>
+		/// A copy of keys collection.
+		/// Modification of the copy has no effect on the underlying cache data.
+		/// </summary>
+		public ICollection<TKey> Keys
+		{
+			get { return new List<TKey>(_candidatesForDeletion); }
+		}
+
+		/// <summary>
+		/// A copy of values collection.
+		/// Modification of the copy has no effect on the underlying cache data.
+		/// </summary>
+		public ICollection<TValue> Values
+		{
+			get { return new List<TValue>(_data.Values); }
+		}
+
+		public TValue this[TKey key]
+		{
+			get
+			{
+				var value = _data[key];
+				UpdateKey(key);
+				return value;
+			}
+			set
+			{
+				_data[key] = value;
+				UpdateKey(key);
+			}
+		}
+
+		#endregion
+
 		public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
 		{
-			return data.GetEnumerator();
+			return _data.GetEnumerator();
 		}
 
-		/// <see cref="Dictionary{TKey,TValue}.GetEnumerator()"/>
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return GetEnumerator();
 		}
 
-		/// <see cref="Add(TKey,TValue)"/>
 		public void Add(KeyValuePair<TKey, TValue> item)
 		{
 			Add(item.Key, item.Value);
 		}
 
-		/// <summary>
-		/// Clear cache.
-		/// </summary>
-		/// <seealso cref="Dictionary{TKey,TValue}.Clear"/>
-		/// <seealso cref="LinkedList{T}.Clear"/>
 		public void Clear()
 		{
-			data.Clear();
-			keyNodeMapping.Clear();
-			candidatesForDeletion.Clear();
+			_data.Clear();
+			_keyNodeMapping.Clear();
+			_candidatesForDeletion.Clear();
 		}
 
-		/// <see cref="Dictionary{TKey,TValue}.Contains(System.Collections.Generic.KeyValuePair{TKey,TValue})"/>
 		public bool Contains(KeyValuePair<TKey, TValue> item)
 		{
-			return data.Contains(item);
+			return _data.Contains(item);
 		}
 
-		/// <see cref="Dictionary{TKey,TValue}.CopyTo(System.Array, int)"/>
 		public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
 		{
-			data.CopyTo(array, arrayIndex);
+			_data.CopyTo(array, arrayIndex);
 		}
 
-		/// <see cref="Remove(TKey)"/>
 		public bool Remove(KeyValuePair<TKey, TValue> item)
 		{
 			bool contains = Contains(item);
@@ -104,32 +146,11 @@ namespace Trainings.Cache
 			return contains;
 		}
 
-		/// <summary>
-		/// Current size of the cache.
-		/// Can't be greater than <see cref="Capacity"/>.
-		/// </summary>
-		/// <seealso cref="Dictionary{TKey,TValue}.Count"/>
-		public int Count
-		{
-			get { return data.Count; }
-		}
-
-		/// <see cref="Dictionary{TKey,TValue}.IsReadOnly"/>
-		public bool IsReadOnly
-		{
-			get { return data.IsReadOnly; }
-		}
-
-		/// <see cref="Dictionary{TKey,TValue}.ContainsKey"/>
 		public bool ContainsKey(TKey key)
 		{
-			return data.ContainsKey(key);
+			return _data.ContainsKey(key);
 		}
 
-		/// <see cref="Dictionary{TKey,TValue}.Add"/>
-		/// <exception cref="ArgumentException">
-		/// An element with the same key already exists in the cache.
-		/// </exception>
 		public void Add(TKey key, TValue value)
 		{
 			if (ContainsKey(key))
@@ -140,82 +161,87 @@ namespace Trainings.Cache
 			{
 				RemoveLastUsed();
 			}
-			var node = candidatesForDeletion.AddLast(key);
-			keyNodeMapping.Add(key, node);
-			data.Add(key, value);
+			var node = _candidatesForDeletion.AddLast(key);
+			_keyNodeMapping.Add(key, node);
+			_data.Add(key, value);
 		}
 
-		/// <see cref="Dictionary{TKey,TValue}.Remove"/>
 		public bool Remove(TKey key)
 		{
-			if (ContainsKey(key))
+			bool contains = ContainsKey(key);
+			if (contains)
 			{
 				RemoveKey(key);
-				return true;
 			}
-			return false;
+			return contains;
 		}
 
-		/// <see cref="Dictionary{TKey,TValue}.TryGetValue"/>
 		public bool TryGetValue(TKey key, out TValue value)
 		{
-			return data.TryGetValue(key, out value);
-		}
-
-		/// <see cref="Dictionary{TKey,TValue}.this"/>
-		public TValue this[TKey key]
-		{
-			get
+			bool success = _data.TryGetValue(key, out value);
+			if (success)
 			{
-				var value = data[key];
-				UpdateKey(key);
-				return value;
-			}
-			set
-			{
-				data[key] = value;
 				UpdateKey(key);
 			}
+			return success;
 		}
 
-		/// <summary>
-		/// A copy of keys collection.
-		/// Modification of the copy has no effect on the underlying cache data.
-		/// </summary>
-		/// <seealso cref="Dictionary{TKey,TValue}.Keys"/>
-		public ICollection<TKey> Keys
+		#region Override
+
+		public override bool Equals(object obj)
 		{
-			get { return new List<TKey>(candidatesForDeletion); }
+			var cache = obj as MyOwnCacheWithBlackjackAndHookers<TKey, TValue>;
+			return Equals(cache);
 		}
 
-		/// <summary>
-		/// A copy of values collection.
-		/// Modification of the copy has no effect on the underlying cache data.
-		/// </summary>
-		/// <seealso cref="Dictionary{TKey,TValue}.Values"/>
-		public ICollection<TValue> Values
+		public bool Equals(MyOwnCacheWithBlackjackAndHookers<TKey, TValue> cache)
 		{
-			get { return new List<TValue>(data.Values); }
+			if (ReferenceEquals(cache, null))
+			{
+				return false;
+			}
+			if (ReferenceEquals(cache, this))
+			{
+				return true;
+			}
+			return _capacity.Equals(cache._capacity)
+				&& _data.Equals(cache._data)
+				&& _candidatesForDeletion.Equals(cache._candidatesForDeletion)
+				&& _keyNodeMapping.Equals(cache._keyNodeMapping);
 		}
+
+		public override int GetHashCode()
+		{
+			Int32 hashCode = _capacity.GetHashCode();
+			unchecked
+			{
+				hashCode = 37 * hashCode + _data.GetHashCode();
+				hashCode = 37 * hashCode + _candidatesForDeletion.GetHashCode();
+				hashCode = 37 * hashCode + _keyNodeMapping.GetHashCode();
+			}
+			return hashCode;
+		}
+
+		#endregion
 
 		private void UpdateKey(TKey key)
 		{
-			var node = keyNodeMapping[key];
-			candidatesForDeletion.Remove(node);
-			candidatesForDeletion.AddLast(node);
+			var node = _keyNodeMapping[key];
+			_candidatesForDeletion.Remove(node);
+			_candidatesForDeletion.AddLast(node);
 		}
 
 		private void RemoveLastUsed()
 		{
-			RemoveKey(candidatesForDeletion.First.Value);
+			RemoveKey(_candidatesForDeletion.First.Value);
 		}
 
 		private void RemoveKey(TKey key)
 		{
-			var node = keyNodeMapping[key];
-			candidatesForDeletion.Remove(node);
-			keyNodeMapping.Remove(key);
-			data.Remove(key);
+			var node = _keyNodeMapping[key];
+			_candidatesForDeletion.Remove(node);
+			_keyNodeMapping.Remove(key);
+			_data.Remove(key);
 		}
 	}
 }
